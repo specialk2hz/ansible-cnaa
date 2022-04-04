@@ -1,3 +1,6 @@
+## Alma Linux 8.5 (RHEL8)
+## fish=true
+
 - hosts: rhel
   user: greed
   become: yes
@@ -67,7 +70,8 @@
           - nano
           - net-tools
           - htop
-          #- fish
+          - fish
+
       when: ansible_facts['os_family'] == 'RedHat' and ansible_facts ['distribution_major_version'] == '8'
 
     - name: Disable root login over SSH
@@ -85,14 +89,14 @@
         append: yes
       when: fish|bool == true
 
-    - name: Download Fisher
-      become: yes
-      get_url:
-        url="{{ item.url }}"
-        dest="{{ item.dest }}"
-      with_items:
-      - {url: "https://git.io/fisher", dest: "/home/greed/fisher"}
-      when: fish|bool == true
+    # - name: Download Fisher
+    #   become: yes
+    #   get_url:
+    #     url="{{ item.url }}"
+    #     dest="{{ item.dest }}"
+    #   with_items:
+    #   - {url: "https://git.io/fisher", dest: "/home/greed/fisher"}
+    #   when: fish|bool == true
 
     - name: Install Fisher
       become: yes
@@ -100,7 +104,7 @@
       command: /usr/bin/fish -c 'curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher'
       when: fish|bool == true
 
-    - name: Install Tide Prompt
+    - name: Install Tide Prompt (specific to)
       become: yes
       become_user: greed
       command: /usr/bin/fish -c 'fisher install IlanCosman/tide@v5.0.1'
