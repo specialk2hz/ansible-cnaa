@@ -1,0 +1,107 @@
+- hosts: rhel
+  user: greed
+  become: yes
+  gather_facts: yes
+  tasks:
+    
+    - name: Set Hostname
+      ansible.builtin.hostname:
+        name: '{{ inventory_hostname }}'
+    
+    - name: Change Timezone
+      community.general.timezone:
+        name: America/New_York
+    
+    - name: Enable cockpit service 
+      ansible.builtin.systemd:
+        name: cockpit
+        enabled: yes
+        masked: no
+        state: started
+      when: ansible_facts['os_family'] == 'RedHat' and ansible_facts ['distribution_major_version'] == '8'
+    
+    - name: Check if Cockpit Issue Exists
+      stat:
+        path: /etc/issue.d/cockpit.issue
+      register: cockpit_issue_result
+
+    - name: Check if Cockpit MOTD Exists
+      stat:
+        path: /etc/motd.d/cockpit
+      register: cockpit_motd_result
+
+    - name: Remove Cockpit Issue
+      shell: /bin/rm -f /etc/issue.d/cockpit.issue
+      when: not cockpit_issue_result.stat.exists
+
+    - name: Remove Cockpit MOTD
+      shell: /bin/rm -f /etc/motd.d/cockpit
+      when: not cockpit_motd_result.stat.exists
+
+    - name: Enable EPEL Repository on Alma 8/CentOS 8
+      dnf:
+        name: epel-release
+        state: latest
+      become: True
+      when: ansible_facts['os_family'] == 'RedHat' and ansible_facts ['distribution_major_version'] == '8'
+
+    # - name: Add repository
+    #   yum_repository:
+    #     name: epel
+    #     description: Open Suse
+    #     baseurl: https://download.opensuse.org/repositories/shells:/fish:/release:/3/CentOS_8/shells:fish:release:3.repo
+
+    - name: Upgrade All packages
+      yum:
+        name: '*'
+        state: latest
+
+    - name: Install  Applications
+      become: yes
+      yum:
+        name: "{{ packages }}"
+        state: present
+        update_cache: yes
+      vars:
+        packages:
+          - nano
+          - net-tools
+          - htop
+          #- fish
+      when: ansible_facts['os_family'] == 'RedHat' and ansible_facts ['distribution_major_version'] == '8'
+
+    - name: Disable root login over SSH
+      copy:
+        dest: "/etc/ssh/ssh_config.d/99-cnaa.conf"
+        content: |
+          PermitRootLogin No
+          PasswordAuthentication No
+
+    - name: Change Shell to Fish
+      ansible.builtin.user:
+        name: greed
+        shell: /usr/bin/fish
+        groups: greed
+        append: yes
+      when: fish|bool == true
+
+    - name: Download Fisher
+      become: yes
+      get_url:
+        url="{{ item.url }}"
+        dest="{{ item.dest }}"
+      with_items:
+      - {url: "https://git.io/fisher", dest: "/home/greed/fisher"}
+      when: fish|bool == true
+
+    - name: Install Fisher
+      become: yes
+      become_user: greed
+      command: /usr/bin/fish -c 'curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher'
+      when: fish|bool == true
+
+    - name: Install Tide Prompt
+      become: yes
+      become_user: greed
+      command: /usr/bin/fish -c 'fisher install IlanCosman/tide@v5.0.1'
+      when: fish|bool == true
