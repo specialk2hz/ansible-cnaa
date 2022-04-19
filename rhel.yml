@@ -48,12 +48,6 @@
       become: True
       when: ansible_facts['os_family'] == 'RedHat' and ansible_facts ['distribution_major_version'] == '8'
 
-    # - name: Add repository
-    #   yum_repository:
-    #     name: epel
-    #     description: Open Suse
-    #     baseurl: https://download.opensuse.org/repositories/shells:/fish:/release:/3/CentOS_8/shells:fish:release:3.repo
-
     - name: Upgrade All packages
       yum:
         name: '*'
@@ -73,13 +67,6 @@
           - fish
       when: ansible_facts['os_family'] == 'RedHat' and ansible_facts ['distribution_major_version'] == '8'
 
-    - name: Disable root login over SSH
-      copy:
-        dest: "/etc/ssh/ssh_config.d/99-cnaa.conf"
-        content: |
-          PermitRootLogin No
-          PasswordAuthentication No
-
     - name: Change Shell to Fish
       ansible.builtin.user:
         name: greed
@@ -87,15 +74,6 @@
         groups: greed
         append: yes
       when: fish|bool == true
-
-    # - name: Download Fisher
-    #   become: yes
-    #   get_url:
-    #     url="{{ item.url }}"
-    #     dest="{{ item.dest }}"
-    #   with_items:
-    #   - {url: "https://git.io/fisher", dest: "/home/greed/fisher"}
-    #   when: fish|bool == true
 
     - name: Install Fisher
       become: yes
@@ -108,3 +86,10 @@
       become_user: greed
       command: /usr/bin/fish -c 'fisher install IlanCosman/tide@v5.0.1'
       when: fish|bool == true
+
+    - name: Install Z for Fish
+      become: yes
+      become_user: greed
+      command: /usr/bin/fish -c 'fisher install fisher install jethrokuan/z'
+      when: fish|bool == true
+
