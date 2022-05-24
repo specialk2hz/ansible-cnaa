@@ -65,6 +65,7 @@
           - net-tools
           - htop
           - fish
+          - git
       when: ansible_facts['os_family'] == 'RedHat' and ansible_facts ['distribution_major_version'] == '8'
 
     - name: Change Shell to Fish
