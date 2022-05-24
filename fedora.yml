@@ -1,0 +1,75 @@
+## Fedora 36 Basic Setup
+## fish=true
+
+- hosts: fedora
+  user: greed
+  become: yes
+  gather_facts: yes
+  tasks:
+    
+    - name: Set Hostname
+      ansible.builtin.hostname:
+        name: '{{ inventory_hostname }}'
+    
+    - name: Change Timezone
+      community.general.timezone:
+        name: America/New_York
+
+    - name: Import RPM Fusion key
+      ansible.builtin.rpm_key:
+        state: present
+        key: https://rpmfusion.org/keys?action=AttachFile&do=get&target=RPM-GPG-KEY-rpmfusion-free-fedora-2020
+
+    - name: Enable the Free RPM Fusion repository
+      become: yes
+      dnf:
+        name: "https://download1.rpmfusion.org/free/fedora/rpmfusion-free-release-{{ansible_distribution_major_version}}.noarch.rpm"
+        state: present
+      when: ansible_facts['os_family'] == 'RedHat' and ansible_facts ['distribution_major_version'] == '36'
+
+    - name: Upgrade All packages
+      dnf:
+        name: '*'
+        state: latest
+
+    - name: Install  Applications
+      become: yes
+      dnf:
+        name: "{{ packages }}"
+        state: present
+        update_cache: yes
+      vars:
+        packages:
+          - nano
+          - net-tools
+          - htop
+          - fish
+          - git
+      when: ansible_facts['os_family'] == 'RedHat' and ansible_facts ['distribution_major_version'] == '36'
+
+    - name: Change Shell to Fish
+      ansible.builtin.user:
+        name: greed
+        shell: /usr/bin/fish
+        groups: greed
+        append: yes
+      when: fish|bool == true
+
+    - name: Install Fisher
+      become: yes
+      become_user: greed
+      command: /usr/bin/fish -c 'curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher'
+      when: fish|bool == true
+
+    - name: Install Tide Prompt (specific to)
+      become: yes
+      become_user: greed
+      command: /usr/bin/fish -c 'fisher install IlanCosman/tide@v5.0.1'
+      when: fish|bool == true
+
+    - name: Install Z for Fish
+      become: yes
+      become_user: greed
+      command: /usr/bin/fish -c 'fisher install fisher install jethrokuan/z'
+      when: fish|bool == true
+
