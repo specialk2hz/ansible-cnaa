@@ -21,7 +21,7 @@
         enabled: yes
         masked: no
         state: started
-      when: ansible_facts['os_family'] == 'RedHat' and ansible_facts ['distribution_major_version'] == '8'
+      when: ansible_facts['os_family'] == 'RedHat'
     
     - name: Check if Cockpit Issue Exists
       stat:
@@ -46,7 +46,7 @@
         name: epel-release
         state: latest
       become: True
-      when: ansible_facts['os_family'] == 'RedHat' and ansible_facts ['distribution_major_version'] == '8'
+      when: ansible_facts['os_family'] == 'RedHat'
 
     - name: Upgrade All packages
       yum:
@@ -66,7 +66,7 @@
           - htop
           - fish
           - git
-      when: ansible_facts['os_family'] == 'RedHat' and ansible_facts ['distribution_major_version'] == '8'
+      when: ansible_facts['os_family'] == 'RedHat'
 
     - name: Change Shell to Fish
       ansible.builtin.user:

@@ -1,0 +1,99 @@
+## Ubuntu Setup
+
+- hosts: ubuntunodes
+  user: greed
+  become: yes
+  gather_facts: yes
+  tasks:
+    - name: install dependencies
+      apt:
+        name: "{{item}}"
+        state: present
+        update_cache: yes
+      loop:
+        - apt-transport-https
+        - ca-certificates
+        - curl
+        - gnupg-agent
+        - software-properties-common
+      when: docker|bool == true
+
+    - name: add GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+      when: docker|bool == true
+
+    - name: add docker repository to apt
+      apt_repository:
+        repo: deb https://download.docker.com/linux/ubuntu kinetic stable
+        state: present
+      when: docker|bool == true
+
+    - name: install docker
+      apt:
+        name: "{{item}}"
+        state: latest
+        update_cache: yes
+      loop:
+        - docker-ce
+        - docker-ce-cli
+        - containerd.io
+      when: docker|bool == true
+
+    - name: check docker is active
+      service:
+        name: docker
+        state: started
+        enabled: yes
+      when: docker|bool == true
+
+    - name: Ensure group "docker" exists
+      ansible.builtin.group:
+        name: docker
+        state: present
+      when: docker|bool == true
+
+    - name: adding greed to docker group
+      user:
+        name: greed
+        groups: docker
+        append: yes
+      when: docker|bool == true
+
+    - name: Install docker-compose
+      get_url:
+        url: https://github.com/docker/compose/releases/download/1.29.2/docker-compose-Linux-x86_64
+        dest: /usr/local/bin/docker-compose
+        mode: 'u+x,g+x'
+      when: docker|bool == true
+
+    - name: Change file ownership, group and permissions
+      ansible.builtin.file:
+        path: /usr/local/bin/docker-compose
+        owner: greed
+        group: greed
+      when: docker|bool == true
+
+    # - name: Set Hostname
+    #   ansible.builtin.hostname:
+    #     name: '{{ inventory_hostname }}'
+    
+    - name: Change Timezone
+      community.general.timezone:
+        name: America/New_York
+
+    - name: Update apt-get repo and cache
+      apt: update_cache=yes force_apt_get=yes cache_valid_time=3600
+
+    - name: Upgrade all apt packages
+      apt: upgrade=dist force_apt_get=yes
+
+    - name: Install  Applications
+      become: yes
+      apt:
+        name: "{{ packages }}"
+        state: present
+        update_cache: yes
+      vars:
+        packages:
