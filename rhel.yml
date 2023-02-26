@@ -21,7 +21,6 @@
         enabled: yes
         masked: no
         state: started
-      when: ansible_facts['os_family'] == 'RedHat'
     
     - name: Check if Cockpit Issue Exists
       stat:
@@ -41,19 +40,18 @@
       shell: /bin/rm -f /etc/motd.d/cockpit
       when: not cockpit_motd_result.stat.exists
 
-    - name: Enable EPEL Repository on Alma 8/CentOS 8
+    - name: Enable EPEL Repository
       dnf:
         name: epel-release
         state: latest
       become: True
-      when: ansible_facts['os_family'] == 'RedHat'
 
     - name: Upgrade All packages
       yum:
         name: '*'
         state: latest
 
-    - name: Install  Applications
+    - name: Install Base Applications
       become: yes
       yum:
         name: "{{ packages }}"
@@ -66,7 +64,9 @@
           - htop
           - fish
           - git
-      when: ansible_facts['os_family'] == 'RedHat'
+          - wget
+
+#Optional Fish Installation
 
     - name: Change Shell to Fish
       ansible.builtin.user:
