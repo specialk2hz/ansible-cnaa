@@ -1,5 +1,10 @@
 #Optional Fish Installation
-
+- hosts: rhel
+  user: greed
+  become: yes
+  gather_facts: yes
+  tasks:
+  
     - name: Change Shell to Fish
       ansible.builtin.user:
         name: greed

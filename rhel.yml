@@ -1,5 +1,7 @@
 ## Alma Linux 8.5 (RHEL8)
-## fish=true
+
+- import_playbook: fish.yml
+  when: fish|bool == true
 
 - hosts: rhel
   user: greed
@@ -8,6 +10,7 @@
   tasks:
     
     - name: Set Hostname
+    #(example: cnaa-dev ansible_host=)
       ansible.builtin.hostname:
         name: '{{ inventory_hostname }}'
     
@@ -65,32 +68,5 @@
           - fish
           - git
           - wget
-
-#Optional Fish Installation
-
-    - name: Change Shell to Fish
-      ansible.builtin.user:
-        name: greed
-        shell: /usr/bin/fish
-        groups: greed
-        append: yes
-      when: fish|bool == true
-
-    - name: Install Fisher
-      become: yes
-      become_user: greed
-      command: /usr/bin/fish -c 'curl -sL https://git.io/fisher | source && fisher install jorgebucaran/fisher'
-      when: fish|bool == true
-
-    - name: Install Tide Prompt (specific to)
-      become: yes
-      become_user: greed
-      command: /usr/bin/fish -c 'fisher install IlanCosman/tide@v5.0.1'
-      when: fish|bool == true
-
-    - name: Install Z for Fish
-      become: yes
-      become_user: greed
-      command: /usr/bin/fish -c 'fisher install fisher install jethrokuan/z'
-      when: fish|bool == true
+          - util-linux-user
 
